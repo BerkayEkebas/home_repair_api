@@ -21,6 +21,10 @@ app.use("/api/customer",customerRoutes)
 app.use("/api/expert",expertRoutes)
 app.use("/api/users",userRoutes)
 
+app.get('/', (req, res) => {
+  res.send('hello world');
+});
+
 
 app.listen(8800,()=>{
     console.log("Api is working");
