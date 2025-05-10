@@ -9,11 +9,9 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-  origin: '*'
-  // credentials: false (ya da hiç yazma)
+  origin: 'https://berkayekebas.github.io',
+  credentials: true
 }));
-//middlewares
-app.use(express.json())
 
 app.use("/api/auth",authRoutes)
 app.use("/api/posts",postRoutes)
