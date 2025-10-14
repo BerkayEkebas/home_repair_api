@@ -1,5 +1,5 @@
 import express from "express";
-import { postRoomStatus } from "../controllers/getValues";
+import { postRoomStatus } from "../controllers/getValues.js";
 
 const router = express.Router();
 
