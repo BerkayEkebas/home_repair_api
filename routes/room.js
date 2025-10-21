@@ -1,5 +1,5 @@
 import express from "express";
-import { createRequests, deleteRequest, getOffersByRequestId, getRequests, getRoomStatusById } from "../controllers/roomController.js";
+import { createRequests, deleteRequest, getOffersByRequestId, getRoomStatusById } from "../controllers/roomController.js";
 
 const router = express.Router();
 
