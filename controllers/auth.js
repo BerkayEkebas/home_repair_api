@@ -44,7 +44,7 @@ export const login = (req, res) => {
 
         // Şifreyi kullanıcı verisinden kaldırarak döndür
         const { password: userPassword, ...userData } = user;  // Şifreyi dışarıya göndermiyoruz
-        return res.status(200).json({ user: userData, role:userData.role, user_id:userData.id});
+        return res.status(200).json({ user: userData, role:userData.role, user_id:userData.user_id});
     });
 };
 
