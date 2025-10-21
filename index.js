@@ -1,7 +1,7 @@
 import express from "express";
 import authRoutes from "./routes/auth.js";
 import expertRoutes from "./routes/expert.js";
-import customerRoutes from "./routes/customer.js";
+import roomRoutes from "./routes/room.js";
 import postRoutes from "./routes/posts.js";
 import userRoutes from "./routes/users.js";
 import getValuesRoutes from "./routes/getvalues.js";
@@ -17,7 +17,7 @@ app.use(express.json());
 
 app.use("/api/auth",authRoutes)
 app.use("/api/posts",postRoutes)
-app.use("/api/customer",customerRoutes)
+app.use("/api/room",roomRoutes)
 app.use("/api/expert",expertRoutes)
 app.use("/api/users",userRoutes)
 app.use("/api/send",getValuesRoutes)

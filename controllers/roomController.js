@@ -1,20 +1,40 @@
 import { db } from "../connect.js"
 
 
-export const getRequests = (req, res) => {
-    const userId = req.body.user_id;  // user_id'yi body'den alıyoruz
-  
-    if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });  // Eğer user_id yoksa hata dönüyoruz
+export const getRoomStatusById = (req, res) => {
+  const userId = req.body.user_id; // body'den user_id alıyoruz
+
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
+
+  const qUser = "SELECT room_id FROM users WHERE user_id = ?";
+
+  db.query(qUser, [userId], (err, userData) => {
+    if (err) return res.status(500).json({ message: "Database error (users)", error: err });
+    if (userData.length === 0) return res.status(404).json({ message: "User not found" });
+
+    const roomId = userData[0].room_id;
+
+    // Eğer room_id 0 ise admin, tüm room_status tablosunu döndür
+    if (roomId === 0) {
+      const qAll = "SELECT * FROM room_status";
+      db.query(qAll, (err, allData) => {
+        if (err) return res.status(500).json({ message: "Database error (room_status)", error: err });
+        return res.status(200).json(allData);
+      });
+    } else {
+      // Değilse sadece o room_id'ye ait satırı döndür
+      const qRoom = "SELECT * FROM room_status WHERE room_id = ?";
+      db.query(qRoom, [roomId], (err, roomData) => {
+        if (err) return res.status(500).json({ message: "Database error (room_status)", error: err });
+        if (roomData.length === 0) return res.status(404).json({ message: "Room not found" });
+        return res.status(200).json(roomData);
+      });
     }
-  
-    const q = "SELECT * FROM requests WHERE user_id = ?";
-    
-    db.query(q, [userId], (err, data) => {
-      if (err) return res.status(500).json(err);
-      return res.status(200).json(data);
-    });
-  };
+  });
+};
+
   
 
 export const createRequests = (req, res) => {

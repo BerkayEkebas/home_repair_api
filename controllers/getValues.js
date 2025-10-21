@@ -10,15 +10,11 @@ export const postRoomStatus = (req, res) => {
 
   // Sadece gelen veriyi JSON olarak geri dön
   res.json({
-    message: "Veri alındı (DB kaydedilmedi, test amaçlı)",
+    message: "Get the value no DB save",
     data: {
       room_id,
       temperature,
       humidity,
-      power_consumption,
-      ac_status,
-      window_status,
-      room_occupancy,
     }
   });
 };

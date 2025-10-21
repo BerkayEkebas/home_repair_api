@@ -14,9 +14,10 @@ db.query(q,[email], (err, data)=>{
    //hash password
    const salt = bcrypt.genSaltSync(10);
    const hashedPassword = bcrypt.hashSync(password, salt);
+   const is_active = 1;
 
-   const q = "INSERT INTO users (`name`, `email`, `password`, `role`) VALUE (?)";
-   const values= [name,email,hashedPassword,role]
+   const q = "INSERT INTO users (`name`, `email`, `password`, `role`, `is_active`) VALUE (?)";
+   const values= [name,email,hashedPassword,role,is_active]
    db.query(q,[values], (err, data)=>{
     if(err) return res.status(500).json(err)
     return res.status(200).json('User has been created')
