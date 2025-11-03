@@ -2,31 +2,66 @@ import { db } from "../connect.js"
 
 
 export const getRoomStatusById = (req, res) => {
-  const userId = req.body.user_id; // body'den user_id alıyoruz
+  const userId = req.body.user_id;
 
   if (!userId) {
     return res.status(400).json({ message: "User ID is required" });
   }
 
-  const qUser = "SELECT room_id FROM users WHERE user_id = ?";
+  const qUser = "SELECT room_id, role FROM users WHERE user_id = ?";
 
   db.query(qUser, [userId], (err, userData) => {
     if (err) return res.status(500).json({ message: "Database error (users)", error: err });
     if (userData.length === 0) return res.status(404).json({ message: "User not found" });
 
-    const roomId = userData[0].room_id;
+    const userRoomId = userData[0].room_id;
+    const userRole = userData[0].role;
 
-    // Eğer room_id 0 ise admin, tüm room_status tablosunu döndür
-    if (roomId === 0) {
-      const qAll = "SELECT * FROM room_status";
+    // Admin ise tüm odaların detaylı bilgilerini getir
+    if (userRole === 'admin' || userRoomId === 0) {
+      const qAll = `
+        SELECT 
+          rs.*,
+          r.room_number,
+          r.room_capacity,
+          f.floor_number,
+          b.building_name,
+          GROUP_CONCAT(DISTINCT u.name) as occupants,
+          COUNT(DISTINCT u.user_id) as occupant_count
+        FROM room_status rs
+        LEFT JOIN rooms r ON rs.room_id = r.room_id
+        LEFT JOIN floors f ON r.floor_id = f.floor_id
+        LEFT JOIN buildings b ON f.building_id = b.building_id
+        LEFT JOIN users u ON r.room_id = u.room_id AND u.is_active = 1
+        GROUP BY rs.status_id, r.room_id, f.floor_id, b.building_id
+        ORDER BY b.building_name, f.floor_number, r.room_number
+      `;
+      
       db.query(qAll, (err, allData) => {
         if (err) return res.status(500).json({ message: "Database error (room_status)", error: err });
         return res.status(200).json(allData);
       });
     } else {
-      // Değilse sadece o room_id'ye ait satırı döndür
-      const qRoom = "SELECT * FROM room_status WHERE room_id = ?";
-      db.query(qRoom, [roomId], (err, roomData) => {
+      // Student ise sadece kendi odasının detaylı bilgilerini getir
+      const qRoom = `
+        SELECT 
+          rs.*,
+          r.room_number,
+          r.room_capacity,
+          f.floor_number,
+          b.building_name,
+          GROUP_CONCAT(DISTINCT u.name) as occupants,
+          COUNT(DISTINCT u.user_id) as occupant_count
+        FROM room_status rs
+        LEFT JOIN rooms r ON rs.room_id = r.room_id
+        LEFT JOIN floors f ON r.floor_id = f.floor_id
+        LEFT JOIN buildings b ON f.building_id = b.building_id
+        LEFT JOIN users u ON r.room_id = u.room_id AND u.is_active = 1
+        WHERE rs.room_id = ?
+        GROUP BY rs.status_id, r.room_id, f.floor_id, b.building_id
+      `;
+      
+      db.query(qRoom, [userRoomId], (err, roomData) => {
         if (err) return res.status(500).json({ message: "Database error (room_status)", error: err });
         if (roomData.length === 0) return res.status(404).json({ message: "Room not found" });
         return res.status(200).json(roomData);
