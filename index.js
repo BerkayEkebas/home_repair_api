@@ -10,9 +10,12 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-  origin: 'https://berkayekebas.github.io',
+  origin: (origin, callback) => {
+    callback(null, true); // tüm originlere izin verir
+  },
   credentials: true
 }));
+
 app.use(express.json());
 
 app.use("/api/auth",authRoutes)
