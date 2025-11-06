@@ -1,11 +1,12 @@
 import express from "express";
-import { postRoomStatus } from "../controllers/getValues.js";
+import { postRoomStatus, postRoomStatusTest } from "../controllers/getValues.js";
 
 const router = express.Router();
 
 
 
 // POST endpoint (IoT cihazlar buraya veri gönderecek)
-router.post("/", postRoomStatus);
+router.post("/", postRoomStatusTest);
+router.post("/save", postRoomStatus);
 
 export default router;
