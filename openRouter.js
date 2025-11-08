@@ -3,7 +3,6 @@ import axios from "axios";
 
 dotenv.config();
 const API_KEY = process.env.API_KEY;
-console.log("API_KEY:", process.env.API_KEY);
 async function getDangerStatusFromAI(data) {
   const prompt = `
 You are an AI system that determines a danger level (danger_status) based on room sensor data.
