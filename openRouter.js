@@ -1,5 +1,9 @@
+import dotenv from 'dotenv';
 import axios from "axios";
 
+dotenv.config();
+const API_KEY = process.env.API_KEY;
+console.log("API_KEY:", process.env.API_KEY);
 async function getDangerStatusFromAI(data) {
   const prompt = `
 You are an AI system that determines a danger level (danger_status) based on room sensor data.
@@ -22,7 +26,7 @@ Sensor Data:
 Respond with only one integer number (0, 1, 2, 3, or 4).  
 Do not include any explanations, words, or symbols — just the number.
 `;
-const API_KEY="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"
+
 const MODEL = 'minimax/minimax-m2:free'; 
 
   try {
