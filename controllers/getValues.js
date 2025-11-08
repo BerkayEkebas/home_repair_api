@@ -1,4 +1,6 @@
+import { calculateDangerStatus } from "../calculateDangerStatus.js";
 import { db } from "../connect.js";
+import getDangerStatusFromAI from "../openRouter.js";
 
 // IoT cihazdan gelen veriyi al ve geri dön
 export const postRoomStatusTest = (req, res) => {
@@ -68,7 +70,23 @@ export const postRoomStatus = (req, res) => {
   });
 
   // 4️⃣ Eğer room_status'ta bu oda zaten varsa güncelle, yoksa ekle
-  function saveOrUpdateRoomStatus(room_id) {
+  async function saveOrUpdateRoomStatus(room_id) {
+    const danger_status = calculateDangerStatus({
+      temperature,
+      humidity,
+      power_consumption,
+      ac_status,
+      window_status,
+      room_occupancy
+    });
+    const danger_status_ai = await getDangerStatusFromAI({
+      temperature,
+      humidity,
+      power_consumption,
+      ac_status,
+      window_status,
+      room_occupancy
+    });
     const checkQuery = "SELECT status_id FROM room_status WHERE room_id = ? LIMIT 1";
     db.query(checkQuery, [room_id], (errCheck, resultCheck) => {
       if (errCheck) {
@@ -80,10 +98,10 @@ export const postRoomStatus = (req, res) => {
         // 5️⃣ Güncelle
         const updateQuery = `
           UPDATE room_status
-          SET temperature = ?, humidity = ?, power_consumption = ?, ac_status = ?, window_status = ?, room_occupancy = ?, last_updated = CURRENT_TIMESTAMP
+          SET temperature = ?, humidity = ?, power_consumption = ?, ac_status = ?, window_status = ?, room_occupancy = ?, last_updated = CURRENT_TIMESTAMP, danger_status = ?, danger_status_ai = ?
           WHERE room_id = ?
         `;
-        db.query(updateQuery, [temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, room_id], (errUpdate) => {
+        db.query(updateQuery, [temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, danger_status_ai, room_id,], (errUpdate) => {
           if (errUpdate) {
             console.error("DB Hatası (room_status update):", errUpdate);
             return res.status(500).json({ error: "Error cannot update" });
@@ -93,10 +111,10 @@ export const postRoomStatus = (req, res) => {
       } else {
         // 6️⃣ Yeni kayıt ekle
         const insertQuery = `
-          INSERT INTO room_status (room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO room_status (room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, , danger_status_ai)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        db.query(insertQuery, [room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy], (errInsert) => {
+        db.query(insertQuery, [room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, danger_status_ai], (errInsert) => {
           if (errInsert) {
             console.error("DB Hatası (room_status insert):", errInsert);
             return res.status(500).json({ error: "Error cannot save" });
