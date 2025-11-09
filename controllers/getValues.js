@@ -17,15 +17,17 @@ export const postRoomStatusTest = (req, res) => {
   });
 };
 
+
 export const postRoomStatus = (req, res) => {
   const { room_number, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy } = req.body;
 
   if (!room_number) {
     return res.status(400).json({ error: "room_number zorunlu" });
   }
-  const new_ac_status = ac_status ? "ON" : "OFF"
-  const new_window_status = window_status ? "OPEN" : "CLOSE"
-  const new_room_occupancy = room_occupancy ? "VACANT" : "OCCUPIED"
+
+  const new_ac_status = ac_status ? "ON" : "OFF";
+  const new_window_status = window_status ? "OPEN" : "CLOSE";
+  const new_room_occupancy = room_occupancy ? "VACANT" : "OCCUPIED";
 
   // 1️⃣ Odayı bul
   const roomQuery = "SELECT room_id, floor_id FROM rooms WHERE room_number = ?";
@@ -72,7 +74,9 @@ export const postRoomStatus = (req, res) => {
     }
   });
 
-  // 4️⃣ Eğer room_status'ta bu oda zaten varsa güncelle, yoksa ekle
+  // 🔹 Hafızada AI rate limit takibi için cache
+  const aiRateLimitCache = new Map(); // key: room_id, value: timestamp
+
   async function saveOrUpdateRoomStatus(room_id) {
     const danger_status = calculateDangerStatus({
       temperature,
@@ -82,14 +86,32 @@ export const postRoomStatus = (req, res) => {
       window_status,
       room_occupancy
     });
-    const danger_status_ai = await getDangerStatusFromAI({
-      temperature,
-      humidity,
-      power_consumption,
-      ac_status,
-      window_status,
-      room_occupancy
-    });
+
+    // 🧠 AI çağrısını 1 dakikada 1 defa yap
+    const now = Date.now();
+    const lastAITime = aiRateLimitCache.get(room_id);
+    let danger_status_ai = null;
+
+    if (!lastAITime || now - lastAITime > 60000) {
+      try {
+        danger_status_ai = await getDangerStatusFromAI({
+          temperature,
+          humidity,
+          power_consumption,
+          ac_status,
+          window_status,
+          room_occupancy
+        });
+        aiRateLimitCache.set(room_id, now);
+        console.log(`✅ AI çağrısı yapıldı (room_id: ${room_id})`);
+      } catch (e) {
+        console.error("AI servisi hatası:", e);
+        danger_status_ai = null;
+      }
+    } else {
+      console.log(`⏳ AI çağrısı atlandı (room_id: ${room_id})`);
+    }
+
     const checkQuery = "SELECT status_id FROM room_status WHERE room_id = ? LIMIT 1";
     db.query(checkQuery, [room_id], (errCheck, resultCheck) => {
       if (errCheck) {
@@ -98,26 +120,37 @@ export const postRoomStatus = (req, res) => {
       }
 
       if (resultCheck.length > 0) {
-        // 5️⃣ Güncelle
+        // ✅ Güncelle
         const updateQuery = `
           UPDATE room_status
-          SET temperature = ?, humidity = ?, power_consumption = ?, ac_status = ?, window_status = ?, room_occupancy = ?, last_updated = CURRENT_TIMESTAMP, danger_status = ?, danger_status_ai = ?
+          SET temperature = ?, humidity = ?, power_consumption = ?, ac_status = ?, window_status = ?, room_occupancy = ?, 
+              last_updated = CURRENT_TIMESTAMP, danger_status = ?, danger_status_ai = IFNULL(?, danger_status_ai)
           WHERE room_id = ?
         `;
-        db.query(updateQuery, [temperature, humidity, power_consumption, new_ac_status, new_window_status, new_room_occupancy, danger_status, danger_status_ai, room_id,], (errUpdate) => {
+        db.query(updateQuery, [
+          temperature, humidity, power_consumption,
+          new_ac_status, new_window_status, new_room_occupancy,
+          danger_status, danger_status_ai, room_id
+        ], (errUpdate) => {
           if (errUpdate) {
             console.error("DB Hatası (room_status update):", errUpdate);
             return res.status(500).json({ error: "Error cannot update" });
           }
           res.json({ message: "Data successfully updated" });
         });
+
       } else {
-        // 6️⃣ Yeni kayıt ekle
+        // ✅ Yeni kayıt ekle
         const insertQuery = `
-          INSERT INTO room_status (room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, , danger_status_ai)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO room_status 
+          (room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, danger_status_ai, last_updated)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
-        db.query(insertQuery, [room_id, temperature, humidity, power_consumption, new_ac_status, new_window_status, new_room_occupancy, danger_status, danger_status_ai], (errInsert) => {
+        db.query(insertQuery, [
+          room_id, temperature, humidity, power_consumption,
+          new_ac_status, new_window_status, new_room_occupancy,
+          danger_status, danger_status_ai
+        ], (errInsert) => {
           if (errInsert) {
             console.error("DB Hatası (room_status insert):", errInsert);
             return res.status(500).json({ error: "Error cannot save" });
@@ -128,4 +161,3 @@ export const postRoomStatus = (req, res) => {
     });
   }
 };
-
