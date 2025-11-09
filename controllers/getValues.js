@@ -23,6 +23,9 @@ export const postRoomStatus = (req, res) => {
   if (!room_number) {
     return res.status(400).json({ error: "room_number zorunlu" });
   }
+  const new_ac_status = ac_status ? "ON" : "OFF"
+  const new_window_status = window_status ? "OPEN" : "CLOSE"
+  const new_room_occupancy = room_occupancy ? "VACANT" : "OCCUPIED"
 
   // 1️⃣ Odayı bul
   const roomQuery = "SELECT room_id, floor_id FROM rooms WHERE room_number = ?";
@@ -101,7 +104,7 @@ export const postRoomStatus = (req, res) => {
           SET temperature = ?, humidity = ?, power_consumption = ?, ac_status = ?, window_status = ?, room_occupancy = ?, last_updated = CURRENT_TIMESTAMP, danger_status = ?, danger_status_ai = ?
           WHERE room_id = ?
         `;
-        db.query(updateQuery, [temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, danger_status_ai, room_id,], (errUpdate) => {
+        db.query(updateQuery, [temperature, humidity, power_consumption, new_ac_status, new_window_status, new_room_occupancy, danger_status, danger_status_ai, room_id,], (errUpdate) => {
           if (errUpdate) {
             console.error("DB Hatası (room_status update):", errUpdate);
             return res.status(500).json({ error: "Error cannot update" });
@@ -114,7 +117,7 @@ export const postRoomStatus = (req, res) => {
           INSERT INTO room_status (room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, , danger_status_ai)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        db.query(insertQuery, [room_id, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy, danger_status, danger_status_ai], (errInsert) => {
+        db.query(insertQuery, [room_id, temperature, humidity, power_consumption, new_ac_status, new_window_status, new_room_occupancy, danger_status, danger_status_ai], (errInsert) => {
           if (errInsert) {
             console.error("DB Hatası (room_status insert):", errInsert);
             return res.status(500).json({ error: "Error cannot save" });
