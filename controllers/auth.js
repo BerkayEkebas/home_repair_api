@@ -48,7 +48,6 @@ export const login = (req, res) => {
     });
 };
 
-
 export const logout = (req, res) => {
    
     return res.status(200).json("Çıkış başarılı.");
