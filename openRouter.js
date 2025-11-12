@@ -26,7 +26,7 @@ Respond with only one integer number (0, 1, 2, 3, or 4).
 Do not include any explanations, words, or symbols — just the number.
 `;
 
-const MODEL = 'minimax/minimax-m2:free'; 
+const MODEL = 'tngtech/deepseek-r1t2-chimera:free'; 
 
   try {
     const response = await axios.post(
