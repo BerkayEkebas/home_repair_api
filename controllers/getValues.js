@@ -105,9 +105,9 @@ export const postRoomStatus = (req, res) => {
           room_occupancy
         });
         aiRateLimitCache.set(room_id, now);
-        console.log(`✅ AI çağrısı yapıldı (room_id: ${room_id})`);
+        console.log(`✅ AI answer (room_id: ${room_id})`);
       } catch (e) {
-        console.error("AI servisi hatası:", e);
+        console.error("AI error:", e);
         danger_status_ai = null;
       }
     } else {

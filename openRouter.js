@@ -25,8 +25,8 @@ Sensor Data:
 Respond with only one integer number (0, 1, 2, 3, or 4).  
 Do not include any explanations, words, or symbols — just the number.
 `;
-
-const MODEL = 'tngtech/deepseek-r1t2-chimera:free'; 
+//tngtech/deepseek-r1t2-chimera:free
+const MODEL = 'kwaipilot/kat-coder-pro:free'; 
 
   try {
     const response = await axios.post(
