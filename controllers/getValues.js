@@ -21,6 +21,7 @@ export const postRoomStatusTest = (req, res) => {
 export const postRoomStatus = (req, res) => {
   const { room_number, temperature, humidity, power_consumption, ac_status, window_status, room_occupancy } = req.body;
   console.log(req.body);
+  console.log(req.body.power_consumption+"Power");
 
   if (!room_number) {
     return res.status(400).json({ error: "room_number zorunlu" });
